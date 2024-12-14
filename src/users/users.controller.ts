@@ -14,8 +14,8 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'User created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   @ApiBody({ type: CreateUserDto })
-  async create(@Body() user: CreateUserDto) {
-    return this.usersService.create(user);
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.create(createUserDto);
   }
 
   @Get()

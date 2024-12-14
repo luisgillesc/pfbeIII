@@ -13,7 +13,7 @@ export class PetsController {
   @ApiOperation({ summary: 'Create a new pet' })
   @ApiResponse({ status: 201, description: 'Pet created successfully.' })
   @ApiBody({ type: CreatePetDto })
-  async create(@Body() createPetDto: CreatePetDto) {
+  async create(@Body() createPetDto: CreatePetDto): Promise<Pet> {
     return this.petsService.create(createPetDto);
   }
 
