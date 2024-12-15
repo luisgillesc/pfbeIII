@@ -40,8 +40,8 @@ export class UsersController {
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  async update(@Param('id') id: string, @Body() user: CreateUserDto) {
-    return this.usersService.update(id, user);
+  async update(@Param('id') id: string, @Body() updateUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')

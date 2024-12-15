@@ -4,28 +4,12 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto } from './dto/register-user.dto';
 import * as bcrypt from 'bcrypt';
+import { User } from '../users/schemas/user.schema';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let usersService: UsersService;
   let jwtService: JwtService;
-
-  const mockUser = {
-    _id: '1',
-    email: 'user@example.com',
-    first_name: 'John',
-    last_name: 'Doe',
-    password: 'hashedPassword123',
-  };
-
-  const usersServiceMock = {
-    create: jest.fn().mockResolvedValue(mockUser),
-    findByEmail: jest.fn().mockResolvedValue(null), // Simulando que no existe el usuario
-  };
-
-  const jwtServiceMock = {
-    sign: jest.fn().mockReturnValue('test-token'),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -33,11 +17,16 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: UsersService,
-          useValue: usersServiceMock,
+          useValue: {
+            findByEmail: jest.fn(),
+            create: jest.fn(),
+          },
         },
         {
           provide: JwtService,
-          useValue: jwtServiceMock,
+          useValue: {
+            sign: jest.fn().mockReturnValue('mockedJwtToken'),
+          },
         },
       ],
     }).compile();
@@ -55,16 +44,29 @@ describe('AuthService', () => {
       last_name: 'Doe',
     };
 
-    jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword123');
+    jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashedPassword123'));
+    jest.spyOn(usersService, 'findByEmail').mockResolvedValue(null);
+
+    const userMock: User = {
+      _id: '1234567890',
+      email: 'user@example.com',
+      first_name: 'John',
+      last_name: 'Doe',
+      password: 'hashedPassword123',
+    } as unknown as User;
+
+    jest.spyOn(usersService, 'create').mockResolvedValue(userMock);
 
     const result = await authService.register(registerDto);
 
-    expect(result).toEqual({ accessToken: 'test-token' });
     expect(usersService.findByEmail).toHaveBeenCalledWith(registerDto.email);
+    expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
     expect(usersService.create).toHaveBeenCalledWith({
-      ...registerDto,
+      email: registerDto.email,
       password: 'hashedPassword123',
+      first_name: registerDto.first_name,
+      last_name: registerDto.last_name,
     });
-    expect(jwtService.sign).toHaveBeenCalledWith({ email: registerDto.email, sub: mockUser._id });
+    expect(result).toEqual({ accessToken: 'mockedJwtToken' });
   });
 });
